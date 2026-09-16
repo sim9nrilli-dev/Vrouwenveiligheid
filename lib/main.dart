@@ -4,8 +4,15 @@ import 'package:latlong2/latlong.dart';
 
 void main() => runApp(const MyApp());
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isDarkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +21,29 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.purple,
         useMaterial3: true,
+        brightness: Brightness.light,
       ),
-      home: const HomePage(),
+      darkTheme: ThemeData(
+        primarySwatch: Colors.purple,
+        useMaterial3: true,
+        brightness: Brightness.dark,
+      ),
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: HomePage(
+        onThemeChanged: (isDark) {
+          setState(() {
+            isDarkMode = isDark;
+          });
+        },
+      ),
     );
   }
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final Function(bool) onThemeChanged;
+
+  const HomePage({super.key, required this.onThemeChanged});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -29,7 +51,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late MapController mapController;
-  bool isDarkMode = false;
 
   @override
   void initState() {
@@ -41,13 +62,24 @@ class _HomePageState extends State<HomePage> {
     showModalBottomSheet(
       context: context,
       builder: (context) => SettingsPanel(
-        isDarkMode: isDarkMode,
         onDarkModeChanged: (value) {
-          setState(() {
-            isDarkMode = value;
-          });
+          widget.onThemeChanged(value);
         },
       ),
+    );
+  }
+
+  void _zoomIn() {
+    mapController.move(
+      mapController.center,
+      mapController.zoom + 1,
+    );
+  }
+
+  void _zoomOut() {
+    mapController.move(
+      mapController.center,
+      mapController.zoom - 1,
     );
   }
 
@@ -126,7 +158,7 @@ class _HomePageState extends State<HomePage> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
@@ -136,7 +168,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ],
                     ),
-                    child: const Text(
+                    child: Text(
                       '🛡️ Vrouwenveiligheid',
                       style: TextStyle(
                         fontSize: 18,
@@ -148,7 +180,7 @@ class _HomePageState extends State<HomePage> {
                   // Settings knop
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -171,6 +203,63 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+          // Zoom knoppen aan de rechterkant
+          SafeArea(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        onPressed: _zoomIn,
+                        icon: const Icon(
+                          Icons.add,
+                          color: Colors.purple,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: IconButton(
+                        onPressed: _zoomOut,
+                        icon: const Icon(
+                          Icons.remove,
+                          color: Colors.purple,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -183,15 +272,27 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class SettingsPanel extends StatelessWidget {
-  final bool isDarkMode;
+class SettingsPanel extends StatefulWidget {
   final Function(bool) onDarkModeChanged;
 
   const SettingsPanel({
     super.key,
-    required this.isDarkMode,
     required this.onDarkModeChanged,
   });
+
+  @override
+  State<SettingsPanel> createState() => _SettingsPanelState();
+}
+
+class _SettingsPanelState extends State<SettingsPanel> {
+  late bool isDarkMode;
+
+  @override
+  void initState() {
+    super.initState();
+    // Detect huidge theme
+    isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -222,7 +323,12 @@ class SettingsPanel extends StatelessWidget {
             title: const Text('Donkere modus'),
             trailing: Switch(
               value: isDarkMode,
-              onChanged: onDarkModeChanged,
+              onChanged: (value) {
+                setState(() {
+                  isDarkMode = value;
+                });
+                widget.onDarkModeChanged(value);
+              },
             ),
           ),
           const Divider(),
