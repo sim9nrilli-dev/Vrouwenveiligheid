@@ -71,15 +71,15 @@ class _HomePageState extends State<HomePage> {
 
   void _zoomIn() {
     mapController.move(
-      mapController.center,
-      mapController.zoom + 1,
+      mapController.camera.center,
+      mapController.camera.zoom + 1,
     );
   }
 
   void _zoomOut() {
     mapController.move(
-      mapController.center,
-      mapController.zoom - 1,
+      mapController.camera.center,
+      mapController.camera.zoom - 1,
     );
   }
 
