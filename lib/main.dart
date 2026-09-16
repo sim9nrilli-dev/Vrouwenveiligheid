@@ -67,8 +67,10 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     mapController = MapController();
-    // Zoom naar Benelux bij start
-    _fitBeneluxBounds();
+    // Roep _fitBeneluxBounds aan NADAT de widget is gerenderd
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fitBeneluxBounds();
+    });
   }
 
   void _fitBeneluxBounds() {
