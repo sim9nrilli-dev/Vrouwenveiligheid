@@ -290,12 +290,13 @@ class _SettingsPanelState extends State<SettingsPanel> {
   @override
   void initState() {
     super.initState();
-    // Detect huidge theme
-    isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
   }
 
   @override
   Widget build(BuildContext context) {
+    // Detect current theme in build method instead of initState
+    isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
