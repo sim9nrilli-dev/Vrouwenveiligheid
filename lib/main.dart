@@ -57,8 +57,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late MapController mapController;
-  bool showSafetyAreas = true;
-  bool showReportedAreas = true;
+
+  // Benelux bounds
+  static const LatLng beneluxNW = LatLng(53.6, 2.5);   // Noord-West
+  static const LatLng beneluxSE = LatLng(49.4, 6.6);   // Zuid-Oost
+  static const LatLng beneluxCenter = LatLng(51.5, 4.8);
 
   @override
   void initState() {
@@ -69,10 +72,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _fitBeneluxBounds() {
-    // Benelux grenzen: Nederland, België, Luxemburg
-    // Noord-West: 53.5°N, 3.4°E (Noord Nederland)
-    // Zuid-Oost: 49.5°N, 6.5°E (Luxemburg)
-    final LatLng beneluxCenter = const LatLng(51.5, 4.8);
     mapController.move(beneluxCenter, 7.5);
   }
 
@@ -84,34 +83,18 @@ class _HomePageState extends State<HomePage> {
         onDarkModeChanged: (value) {
           widget.onThemeChanged(value);
         },
-        showSafetyAreas: showSafetyAreas,
-        showReportedAreas: showReportedAreas,
-        onSafetyAreasChanged: (value) {
-          setState(() {
-            showSafetyAreas = value;
-          });
-        },
-        onReportedAreasChanged: (value) {
-          setState(() {
-            showReportedAreas = value;
-          });
-        },
       ),
     );
   }
 
   void _zoomIn() {
-    mapController.move(
-      mapController.camera.center,
-      mapController.camera.zoom + 1,
-    );
+    final newZoom = (mapController.camera.zoom + 1).clamp(6.0, 20.0);
+    mapController.move(mapController.camera.center, newZoom);
   }
 
   void _zoomOut() {
-    mapController.move(
-      mapController.camera.center,
-      mapController.camera.zoom - 1,
-    );
+    final newZoom = (mapController.camera.zoom - 1).clamp(6.0, 20.0);
+    mapController.move(mapController.camera.center, newZoom);
   }
 
   @override
@@ -123,14 +106,11 @@ class _HomePageState extends State<HomePage> {
           FlutterMap(
             mapController: mapController,
             options: MapOptions(
-              initialCenter: const LatLng(51.5, 4.8), // Benelux center
+              initialCenter: beneluxCenter,
               initialZoom: 7.5,
-              minZoom: 6.0, // Benelux goed zichtbaar
-              maxZoom: 18.0,
-              bounds: LatLngBounds(
-                const LatLng(53.6, 2.5),  // NW hoek (Noord Nederland/Groningen)
-                const LatLng(49.4, 6.6),  // SE hoek (Luxemburg)
-              ),
+              minZoom: 6.0,  // Benelux goed zichtbaar
+              maxZoom: 20.0, // Heel ver inzoomen toegestaan
+              bounds: LatLngBounds(beneluxNW, beneluxSE),
               boundsOptions: const FitBoundsOptions(
                 padding: EdgeInsets.all(40),
               ),
@@ -144,79 +124,6 @@ class _HomePageState extends State<HomePage> {
                     ? 'https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}.png'
                     : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 subdomains: const ['a', 'b', 'c'],
-              ),
-              // Benelux grens markering (visueel)
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    points: const [
-                      // Nederlandse grens (versimpeld)
-                      LatLng(53.5, 7.2),   // Groningen
-                      LatLng(52.8, 6.5),   // Duitse grens
-                      LatLng(51.8, 6.2),   // Duitse grens Zuid
-                    ],
-                    color: Colors.blue.withOpacity(0.3),
-                    strokeWidth: 2,
-                  ),
-                ],
-              ),
-              MarkerLayer(
-                markers: [
-                  if (showSafetyAreas)
-                    Marker(
-                      point: const LatLng(52.3676, 4.9041), // Amsterdam
-                      width: 80,
-                      height: 80,
-                      child: GestureDetector(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Amsterdam - Veilig Area')),
-                          );
-                        },
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Colors.green,
-                          size: 40,
-                        ),
-                      ),
-                    ),
-                  if (showReportedAreas)
-                    Marker(
-                      point: const LatLng(52.0116, 4.3571), // Den Haag
-                      width: 80,
-                      height: 80,
-                      child: GestureDetector(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Den Haag - Waarschuwing')),
-                          );
-                        },
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Colors.red,
-                          size: 40,
-                        ),
-                      ),
-                    ),
-                  if (showSafetyAreas)
-                    Marker(
-                      point: const LatLng(50.8465, 4.3516), // Brussel
-                      width: 80,
-                      height: 80,
-                      child: GestureDetector(
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Brussel - Veilig Area')),
-                          );
-                        },
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Colors.green,
-                          size: 40,
-                        ),
-                      ),
-                    ),
-                ],
               ),
             ],
           ),
@@ -372,19 +279,11 @@ class _HomePageState extends State<HomePage> {
 class SettingsPanel extends StatefulWidget {
   final bool isDarkMode;
   final Function(bool) onDarkModeChanged;
-  final bool showSafetyAreas;
-  final bool showReportedAreas;
-  final Function(bool) onSafetyAreasChanged;
-  final Function(bool) onReportedAreasChanged;
 
   const SettingsPanel({
     super.key,
     required this.isDarkMode,
     required this.onDarkModeChanged,
-    required this.showSafetyAreas,
-    required this.showReportedAreas,
-    required this.onSafetyAreasChanged,
-    required this.onReportedAreasChanged,
   });
 
   @override
@@ -393,15 +292,11 @@ class SettingsPanel extends StatefulWidget {
 
 class _SettingsPanelState extends State<SettingsPanel> {
   late bool isDarkMode;
-  late bool showSafetyAreas;
-  late bool showReportedAreas;
 
   @override
   void initState() {
     super.initState();
     isDarkMode = widget.isDarkMode;
-    showSafetyAreas = widget.showSafetyAreas;
-    showReportedAreas = widget.showReportedAreas;
   }
 
   @override
@@ -443,46 +338,6 @@ class _SettingsPanelState extends State<SettingsPanel> {
                   widget.onDarkModeChanged(value);
                 },
               ),
-            ),
-            const Divider(),
-            // Kaart Instellingen
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Kaart instellingen',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.purple,
-                  ),
-                ),
-              ),
-            ),
-            CheckboxListTile(
-              title: const Text('Veilige zones weergeven'),
-              subtitle: const Text('Groene markering'),
-              value: showSafetyAreas,
-              onChanged: (value) {
-                setState(() {
-                  showSafetyAreas = value ?? false;
-                });
-                widget.onSafetyAreasChanged(value ?? false);
-              },
-              activeColor: Colors.purple,
-            ),
-            CheckboxListTile(
-              title: const Text('Waarschuwingszones weergeven'),
-              subtitle: const Text('Rode markering'),
-              value: showReportedAreas,
-              onChanged: (value) {
-                setState(() {
-                  showReportedAreas = value ?? false;
-                });
-                widget.onReportedAreasChanged(value ?? false);
-              },
-              activeColor: Colors.purple,
             ),
             const Divider(),
             ListTile(
