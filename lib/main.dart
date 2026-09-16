@@ -72,8 +72,6 @@ class _HomePageState extends State<HomePage> {
               TileLayer(
                 urlTemplate:
                     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageIdentifier: 'com.example.app',
-                // Voor offline gebruik: zorg dat tiles gecacht zijn
               ),
               MarkerLayer(
                 markers: [
