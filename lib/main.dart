@@ -110,10 +110,6 @@ class _HomePageState extends State<HomePage> {
               initialZoom: 7.5,
               minZoom: 6.0,  // Benelux goed zichtbaar
               maxZoom: 20.0, // Heel ver inzoomen toegestaan
-              bounds: LatLngBounds(beneluxNW, beneluxSE),
-              boundsOptions: const FitBoundsOptions(
-                padding: EdgeInsets.all(40),
-              ),
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all,
               ),
