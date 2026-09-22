@@ -72,8 +72,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late MapController mapController;
 
-  // A slightly wider frame keeps all of Belgium, the Netherlands,
-  // Luxembourg and the relevant coastline visible.
+  // This is intentionally a tight Benelux frame, not a large rectangle around it.
   static const LatLng beneluxNW = LatLng(53.7, 2.5);
   static const LatLng beneluxSE = LatLng(49.3, 7.5);
   static const LatLng beneluxCenter = LatLng(51.5, 4.8);
@@ -81,6 +80,37 @@ class _HomePageState extends State<HomePage> {
     beneluxNW,
     beneluxSE,
   );
+
+  // Outer outline of the three Benelux countries. The mask below makes every
+  // tile outside this outline sea, so Germany and France are not shown.
+  static const List<LatLng> beneluxOutline = [
+    LatLng(51.35, 3.36), // Belgian coast
+    LatLng(51.50, 3.72),
+    LatLng(51.80, 3.85),
+    LatLng(52.35, 3.85),
+    LatLng(52.85, 4.35),
+    LatLng(53.55, 6.60), // Dutch Wadden coast
+    LatLng(53.55, 6.95),
+    LatLng(53.20, 7.20), // Netherlands/Germany border
+    LatLng(52.65, 7.05),
+    LatLng(52.10, 6.90),
+    LatLng(51.45, 6.25),
+    LatLng(51.05, 6.05),
+    LatLng(50.75, 6.15),
+    LatLng(50.55, 6.10),
+    LatLng(50.30, 6.15),
+    LatLng(50.18, 5.95), // Luxembourg/Germany border
+    LatLng(49.45, 6.15),
+    LatLng(49.45, 5.75), // Luxembourg/France border
+    LatLng(49.50, 5.20),
+    LatLng(49.55, 4.85),
+    LatLng(49.75, 4.45),
+    LatLng(50.05, 4.20),
+    LatLng(50.35, 3.35),
+    LatLng(50.75, 2.55), // Belgian/French border
+    LatLng(51.05, 2.55),
+    LatLng(51.20, 2.85),
+  ];
 
   @override
   void initState() {
@@ -121,6 +151,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final seaColor = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFF123B4A)
+        : const Color(0xFF9ED8EA);
+
     return Scaffold(
       body: Stack(
         children: [
@@ -131,20 +165,34 @@ class _HomePageState extends State<HomePage> {
               initialZoom: 7.5,
               minZoom: 6.0,
               maxZoom: 19.0,
-              // The map remains interactive: drag to pan, pinch/spread to
-              // zoom, rotate with two fingers, and double-tap to zoom in.
               cameraConstraint: CameraConstraint.contain(bounds: beneluxBounds),
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all,
               ),
             ),
             children: [
-              // OpenStreetMap's standard tiles do not require an API key.
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.vrouwenveiligheid.app',
                 maxZoom: 19,
                 retinaMode: false,
+              ),
+              // A world-sized polygon with a Benelux-shaped hole masks all
+              // surrounding countries. Only the Benelux map remains visible.
+              PolygonLayer(
+                polygons: [
+                  Polygon(
+                    points: const [
+                      LatLng(-85, -180),
+                      LatLng(-85, 180),
+                      LatLng(85, 180),
+                      LatLng(85, -180),
+                    ],
+                    color: seaColor,
+                    isFilled: true,
+                    holePointsList: [beneluxOutline],
+                  ),
+                ],
               ),
               RichAttributionWidget(
                 alignment: AttributionAlignment.bottomLeft,
