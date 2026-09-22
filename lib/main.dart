@@ -72,8 +72,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late MapController mapController;
 
-  static const LatLng beneluxNW = LatLng(53.6, 2.5);
-  static const LatLng beneluxSE = LatLng(49.4, 6.6);
+  // A slightly wider frame keeps all of Belgium, the Netherlands,
+  // Luxembourg and the relevant coastline visible.
+  static const LatLng beneluxNW = LatLng(53.7, 2.5);
+  static const LatLng beneluxSE = LatLng(49.3, 7.5);
   static const LatLng beneluxCenter = LatLng(51.5, 4.8);
   static final LatLngBounds beneluxBounds = LatLngBounds(
     beneluxNW,
@@ -135,9 +137,21 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             children: [
+              // Carto Positron is deliberately clean and flat: no relief,
+              // brown sandbanks or terrain styling like the default OSM map.
               TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate:
+                    'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+                subdomains: const ['a', 'b', 'c', 'd'],
                 userAgentPackageName: 'com.vrouwenveiligheid.app',
+                retinaMode: true,
+              ),
+              TileLayer(
+                urlTemplate:
+                    'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
+                subdomains: const ['a', 'b', 'c', 'd'],
+                userAgentPackageName: 'com.vrouwenveiligheid.app',
+                retinaMode: true,
               ),
             ],
           ),
@@ -147,16 +161,13 @@ class _HomePageState extends State<HomePage> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                 child: _GlassPanel(
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(32),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _MapButton(icon: Icons.add, onPressed: _zoomIn),
                       _MapButton(icon: Icons.remove, onPressed: _zoomOut),
-                      _MapButton(
-                        icon: Icons.home,
-                        onPressed: _fitBeneluxBounds,
-                      ),
+                      _MapButton(icon: Icons.home, onPressed: _fitBeneluxBounds),
                       const _GlassDivider(),
                       _MapButton(
                         icon: Icons.settings_outlined,
@@ -192,21 +203,21 @@ class _GlassPanel extends StatelessWidget {
     return ClipRRect(
       borderRadius: borderRadius,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.62),
+            color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.58),
             borderRadius: borderRadius,
             border: Border.all(
-              color: Colors.white.withValues(alpha: isDark ? 0.24 : 0.72),
+              color: Colors.white.withValues(alpha: isDark ? 0.28 : 0.78),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.18),
-                blurRadius: 18,
-                offset: const Offset(0, 6),
+                blurRadius: 22,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -226,7 +237,7 @@ class _GlassDivider extends StatelessWidget {
       width: 1,
       height: 28,
       margin: const EdgeInsets.symmetric(horizontal: 5),
-      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.22),
     );
   }
 }
@@ -239,13 +250,47 @@ class _MapButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(
-      onPressed: onPressed,
-      tooltip: icon == Icons.settings_outlined ? 'Instellingen' : null,
-      icon: Icon(
-        icon,
-        color: Theme.of(context).colorScheme.primary,
-        size: 27,
+    final primary = Theme.of(context).colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(18),
+          splashColor: primary.withValues(alpha: 0.16),
+          highlightColor: primary.withValues(alpha: 0.08),
+          child: Ink(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: 0.62),
+                  primary.withValues(alpha: 0.10),
+                ],
+              ),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.72),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: primary.withValues(alpha: 0.10),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              color: primary,
+              size: 25,
+            ),
+          ),
+        ),
       ),
     );
   }
