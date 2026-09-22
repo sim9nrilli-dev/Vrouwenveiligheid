@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -16,25 +18,37 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    const orange = Color(0xFFF4511E);
+    const red = Color(0xFFD32F2F);
+    const yellow = Color(0xFFFFB300);
+
     return MaterialApp(
       title: 'Vrouwenveiligheid',
       theme: ThemeData(
-        primarySwatch: Colors.purple,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: orange,
+          primary: red,
+          secondary: yellow,
+          surface: Colors.white,
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: Colors.white,
         useMaterial3: true,
-        brightness: Brightness.light,
       ),
       darkTheme: ThemeData(
-        primarySwatch: Colors.purple,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: orange,
+          primary: const Color(0xFFFF6659),
+          secondary: yellow,
+          brightness: Brightness.dark,
+        ),
         useMaterial3: true,
-        brightness: Brightness.dark,
       ),
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
       home: HomePage(
         isDarkMode: isDarkMode,
         onThemeChanged: (isDark) {
-          setState(() {
-            isDarkMode = isDark;
-          });
+          setState(() => isDarkMode = isDark);
         },
       ),
     );
@@ -58,7 +72,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late MapController mapController;
 
-  // Gebied waarin de kaart blijft: alleen de Benelux.
   static const LatLng beneluxNW = LatLng(53.6, 2.5);
   static const LatLng beneluxSE = LatLng(49.4, 6.6);
   static const LatLng beneluxCenter = LatLng(51.5, 4.8);
@@ -71,9 +84,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     mapController = MapController();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fitBeneluxBounds();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fitBeneluxBounds());
   }
 
   void _fitBeneluxBounds() {
@@ -88,6 +99,7 @@ class _HomePageState extends State<HomePage> {
   void _openSettings() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (context) => SettingsPanel(
         isDarkMode: widget.isDarkMode,
         onDarkModeChanged: widget.onThemeChanged,
@@ -117,92 +129,41 @@ class _HomePageState extends State<HomePage> {
               initialZoom: 7.5,
               minZoom: 6.0,
               maxZoom: 20.0,
-              // Pannen buiten de Benelux wordt hiermee geblokkeerd.
-              cameraConstraint: CameraConstraint.contain(
-                bounds: beneluxBounds,
-              ),
+              cameraConstraint: CameraConstraint.contain(bounds: beneluxBounds),
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all,
               ),
             ),
             children: [
               TileLayer(
-                // OpenStreetMap-kaart, zonder externe API-sleutel.
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.vrouwenveiligheid.app',
               ),
             ],
           ),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).scaffoldBackgroundColor,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Text(
-                      '🛡️ Vrouwenveiligheid',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.purple,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).scaffoldBackgroundColor,
-                      shape: BoxShape.circle,
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      onPressed: _openSettings,
-                      icon: const Icon(
-                        Icons.settings,
-                        color: Colors.purple,
-                        size: 28,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SafeArea(
             child: Align(
-              alignment: Alignment.centerRight,
+              alignment: Alignment.bottomCenter,
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _MapButton(icon: Icons.add, onPressed: _zoomIn),
-                    const SizedBox(height: 8),
-                    _MapButton(icon: Icons.remove, onPressed: _zoomOut),
-                    const SizedBox(height: 8),
-                    _MapButton(icon: Icons.home, onPressed: _fitBeneluxBounds),
-                  ],
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: _GlassPanel(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _MapButton(icon: Icons.add, onPressed: _zoomIn),
+                      _MapButton(icon: Icons.remove, onPressed: _zoomOut),
+                      _MapButton(
+                        icon: Icons.home,
+                        onPressed: _fitBeneluxBounds,
+                      ),
+                      const _GlassDivider(),
+                      _MapButton(
+                        icon: Icons.settings_outlined,
+                        onPressed: _openSettings,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -219,6 +180,57 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+class _GlassPanel extends StatelessWidget {
+  final Widget child;
+  final BorderRadius borderRadius;
+
+  const _GlassPanel({required this.child, required this.borderRadius});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.62),
+            borderRadius: borderRadius,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: isDark ? 0.24 : 0.72),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassDivider extends StatelessWidget {
+  const _GlassDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 28,
+      margin: const EdgeInsets.symmetric(horizontal: 5),
+      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.25),
+    );
+  }
+}
+
 class _MapButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
@@ -227,21 +239,13 @@ class _MapButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        shape: BoxShape.circle,
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(icon, color: Colors.purple, size: 28),
+    return IconButton(
+      onPressed: onPressed,
+      tooltip: icon == Icons.settings_outlined ? 'Instellingen' : null,
+      icon: Icon(
+        icon,
+        color: Theme.of(context).colorScheme.primary,
+        size: 27,
       ),
     );
   }
@@ -272,65 +276,72 @@ class _SettingsPanelState extends State<SettingsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Instellingen',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 30),
-            ListTile(
-              leading: const Icon(Icons.dark_mode, color: Colors.purple),
-              title: const Text('Donkere modus'),
-              trailing: Switch(
-                value: isDarkMode,
-                activeColor: Colors.purple,
-                onChanged: (value) {
-                  setState(() => isDarkMode = value);
-                  widget.onDarkModeChanged(value);
-                },
-              ),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.notifications, color: Colors.purple),
-              title: const Text('Meldingen'),
-              trailing: const Icon(Icons.arrow_forward),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Meldingen instellingen geopend'),
+    return _GlassPanel(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                );
-              },
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Instellingen',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                ListTile(
+                  leading: Icon(Icons.dark_mode, color: Theme.of(context).colorScheme.primary),
+                  title: const Text('Donkere modus'),
+                  trailing: Switch(
+                    value: isDarkMode,
+                    activeColor: Theme.of(context).colorScheme.primary,
+                    onChanged: (value) {
+                      setState(() => isDarkMode = value);
+                      widget.onDarkModeChanged(value);
+                    },
+                  ),
+                ),
+                const Divider(),
+                ListTile(
+                  leading: Icon(Icons.notifications, color: Theme.of(context).colorScheme.secondary),
+                  title: const Text('Meldingen'),
+                  trailing: const Icon(Icons.arrow_forward),
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Meldingen instellingen geopend')),
+                    );
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: Icon(Icons.info, color: Theme.of(context).colorScheme.secondary),
+                  title: const Text('Over deze app'),
+                  trailing: const Icon(Icons.arrow_forward),
+                  onTap: () {
+                    showAboutDialog(
+                      context: context,
+                      applicationName: 'Vrouwenveiligheid',
+                      applicationVersion: '1.0.0',
+                    );
+                  },
+                ),
+              ],
             ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.info, color: Colors.purple),
-              title: const Text('Over deze app'),
-              trailing: const Icon(Icons.arrow_forward),
-              onTap: () {
-                showAboutDialog(
-                  context: context,
-                  applicationName: 'Vrouwenveiligheid',
-                  applicationVersion: '1.0.0',
-                );
-              },
-            ),
-          ],
+          ),
         ),
       ),
     );
