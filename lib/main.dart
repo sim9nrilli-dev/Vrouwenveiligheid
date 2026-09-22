@@ -58,23 +58,31 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late MapController mapController;
 
-  // Benelux bounds
-  static const LatLng beneluxNW = LatLng(53.6, 2.5);   // Noord-West
-  static const LatLng beneluxSE = LatLng(49.4, 6.6);   // Zuid-Oost
+  // Gebied waarin de kaart blijft: alleen de Benelux.
+  static const LatLng beneluxNW = LatLng(53.6, 2.5);
+  static const LatLng beneluxSE = LatLng(49.4, 6.6);
   static const LatLng beneluxCenter = LatLng(51.5, 4.8);
+  static final LatLngBounds beneluxBounds = LatLngBounds(
+    beneluxNW,
+    beneluxSE,
+  );
 
   @override
   void initState() {
     super.initState();
     mapController = MapController();
-    // Roep _fitBeneluxBounds aan NADAT de widget is gerenderd
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fitBeneluxBounds();
     });
   }
 
   void _fitBeneluxBounds() {
-    mapController.move(beneluxCenter, 7.5);
+    mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: beneluxBounds,
+        padding: const EdgeInsets.all(24),
+      ),
+    );
   }
 
   void _openSettings() {
@@ -82,9 +90,7 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (context) => SettingsPanel(
         isDarkMode: widget.isDarkMode,
-        onDarkModeChanged: (value) {
-          widget.onThemeChanged(value);
-        },
+        onDarkModeChanged: widget.onThemeChanged,
       ),
     );
   }
@@ -104,28 +110,29 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Interactieve kaart op de achtergrond
           FlutterMap(
             mapController: mapController,
             options: MapOptions(
               initialCenter: beneluxCenter,
               initialZoom: 7.5,
-              minZoom: 6.0,  // Benelux goed zichtbaar
-              maxZoom: 20.0, // Heel ver inzoomen toegestaan
+              minZoom: 6.0,
+              maxZoom: 20.0,
+              // Pannen buiten de Benelux wordt hiermee geblokkeerd.
+              cameraConstraint: CameraConstraint.contain(
+                bounds: beneluxBounds,
+              ),
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all,
               ),
             ),
             children: [
               TileLayer(
-                urlTemplate: widget.isDarkMode
-                    ? 'https://tiles.stadiamaps.com/tiles/stamen_toner/{z}/{x}/{y}.png'
-                    : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                subdomains: const ['a', 'b', 'c'],
+                // OpenStreetMap-kaart, zonder externe API-sleutel.
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.vrouwenveiligheid.app',
               ),
             ],
           ),
-          // Bovenste balk met title
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -140,15 +147,15 @@ class _HomePageState extends State<HomePage> {
                     decoration: BoxDecoration(
                       color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.black12,
                           blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          offset: Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: Text(
+                    child: const Text(
                       '🛡️ Vrouwenveiligheid',
                       style: TextStyle(
                         fontSize: 18,
@@ -157,16 +164,15 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-                  // Settings knop
                   Container(
                     decoration: BoxDecoration(
                       color: Theme.of(context).scaffoldBackgroundColor,
                       shape: BoxShape.circle,
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(
                           color: Colors.black12,
                           blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          offset: Offset(0, 2),
                         ),
                       ],
                     ),
@@ -183,7 +189,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          // Zoom knoppen aan de rechterkant
           SafeArea(
             child: Align(
               alignment: Alignment.centerRight,
@@ -192,71 +197,11 @@ class _HomePageState extends State<HomePage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        onPressed: _zoomIn,
-                        icon: const Icon(
-                          Icons.add,
-                          color: Colors.purple,
-                          size: 28,
-                        ),
-                      ),
-                    ),
+                    _MapButton(icon: Icons.add, onPressed: _zoomIn),
                     const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        onPressed: _zoomOut,
-                        icon: const Icon(
-                          Icons.remove,
-                          color: Colors.purple,
-                          size: 28,
-                        ),
-                      ),
-                    ),
+                    _MapButton(icon: Icons.remove, onPressed: _zoomOut),
                     const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: IconButton(
-                        onPressed: _fitBeneluxBounds,
-                        icon: const Icon(
-                          Icons.home,
-                          color: Colors.purple,
-                          size: 28,
-                        ),
-                      ),
-                    ),
+                    _MapButton(icon: Icons.home, onPressed: _fitBeneluxBounds),
                   ],
                 ),
               ),
@@ -271,6 +216,34 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     mapController.dispose();
     super.dispose();
+  }
+}
+
+class _MapButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  const _MapButton({required this.icon, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        shape: BoxShape.circle,
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon, color: Colors.purple, size: 28),
+      ),
+    );
   }
 }
 
@@ -316,13 +289,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
             const SizedBox(height: 20),
             const Text(
               'Instellingen',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 30),
-            // Donkere Modus Toggle
             ListTile(
               leading: const Icon(Icons.dark_mode, color: Colors.purple),
               title: const Text('Donkere modus'),
@@ -330,9 +299,7 @@ class _SettingsPanelState extends State<SettingsPanel> {
                 value: isDarkMode,
                 activeColor: Colors.purple,
                 onChanged: (value) {
-                  setState(() {
-                    isDarkMode = value;
-                  });
+                  setState(() => isDarkMode = value);
                   widget.onDarkModeChanged(value);
                 },
               ),
@@ -344,7 +311,9 @@ class _SettingsPanelState extends State<SettingsPanel> {
               trailing: const Icon(Icons.arrow_forward),
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Meldingen instellingen geopend')),
+                  const SnackBar(
+                    content: Text('Meldingen instellingen geopend'),
+                  ),
                 );
               },
             ),
