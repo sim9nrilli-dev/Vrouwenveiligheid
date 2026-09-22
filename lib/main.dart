@@ -110,12 +110,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _zoomIn() {
-    final newZoom = (mapController.camera.zoom + 1).clamp(6.0, 20.0);
+    final newZoom = (mapController.camera.zoom + 1).clamp(6.0, 19.0);
     mapController.move(mapController.camera.center, newZoom);
   }
 
   void _zoomOut() {
-    final newZoom = (mapController.camera.zoom - 1).clamp(6.0, 20.0);
+    final newZoom = (mapController.camera.zoom - 1).clamp(6.0, 19.0);
     mapController.move(mapController.camera.center, newZoom);
   }
 
@@ -130,28 +130,30 @@ class _HomePageState extends State<HomePage> {
               initialCenter: beneluxCenter,
               initialZoom: 7.5,
               minZoom: 6.0,
-              maxZoom: 20.0,
+              maxZoom: 19.0,
+              // The map remains interactive: drag to pan, pinch/spread to
+              // zoom, rotate with two fingers, and double-tap to zoom in.
               cameraConstraint: CameraConstraint.contain(bounds: beneluxBounds),
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all,
               ),
             ),
             children: [
-              // Carto Positron is deliberately clean and flat: no relief,
-              // brown sandbanks or terrain styling like the default OSM map.
+              // OpenStreetMap's standard tiles do not require an API key.
               TileLayer(
-                urlTemplate:
-                    'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
-                subdomains: const ['a', 'b', 'c', 'd'],
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.vrouwenveiligheid.app',
-                retinaMode: true,
+                maxZoom: 19,
+                retinaMode: false,
               ),
-              TileLayer(
-                urlTemplate:
-                    'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
-                subdomains: const ['a', 'b', 'c', 'd'],
-                userAgentPackageName: 'com.vrouwenveiligheid.app',
-                retinaMode: true,
+              RichAttributionWidget(
+                alignment: AttributionAlignment.bottomLeft,
+                attributions: [
+                  TextSourceAttribution(
+                    'OpenStreetMap contributors',
+                    onTap: () {},
+                  ),
+                ],
               ),
             ],
           ),
