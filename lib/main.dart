@@ -75,18 +75,58 @@ class _HomePageState extends State<HomePage> {
   static const beneluxCenter = LatLng(51.5, 4.8);
   static final beneluxBounds = LatLngBounds(beneluxNW, beneluxSE);
 
-  // Vereenvoudigde lokale vectorkaart. Deze kaart wordt volledig door Flutter
-  // getekend en heeft dus geen internet, tiles of laadscherm nodig.
-  static const beneluxOutline = <LatLng>[
-    LatLng(51.35, 3.36), LatLng(51.50, 3.72), LatLng(51.80, 3.85),
-    LatLng(52.35, 3.85), LatLng(52.85, 4.35), LatLng(53.55, 6.60),
-    LatLng(53.55, 6.95), LatLng(53.20, 7.20), LatLng(52.65, 7.05),
-    LatLng(52.10, 6.90), LatLng(51.45, 6.25), LatLng(51.05, 6.05),
-    LatLng(50.75, 6.15), LatLng(50.55, 6.10), LatLng(50.30, 6.15),
-    LatLng(50.18, 5.95), LatLng(49.45, 6.15), LatLng(49.45, 5.75),
-    LatLng(49.50, 5.20), LatLng(49.55, 4.85), LatLng(49.75, 4.45),
-    LatLng(50.05, 4.20), LatLng(50.35, 3.35), LatLng(50.75, 2.55),
-    LatLng(51.05, 2.55), LatLng(51.20, 2.85),
+  // Landgrenzen per land in plaats van één grove, hoekige omtrek. Hierdoor
+  // blijven de kustlijn, Zeeland, Limburg en Luxemburg herkenbaar zonder
+  // afhankelijk te zijn van online kaarttegels.
+  static const countryOutlines = <List<LatLng>>[
+    // Nederland
+    [
+      LatLng(51.35, 3.36), LatLng(51.42, 3.50), LatLng(51.52, 3.66),
+      LatLng(51.62, 3.78), LatLng(51.72, 3.84), LatLng(51.82, 3.84),
+      LatLng(51.92, 3.90), LatLng(52.08, 3.96), LatLng(52.25, 4.05),
+      LatLng(52.42, 4.18), LatLng(52.58, 4.32), LatLng(52.70, 4.42),
+      LatLng(52.82, 4.57), LatLng(52.95, 4.78), LatLng(53.08, 4.96),
+      LatLng(53.20, 5.18), LatLng(53.32, 5.42), LatLng(53.45, 5.68),
+      LatLng(53.56, 5.95), LatLng(53.56, 6.18), LatLng(53.51, 6.38),
+      LatLng(53.55, 6.62), LatLng(53.55, 6.95), LatLng(53.40, 7.05),
+      LatLng(53.25, 7.18), LatLng(53.10, 7.20), LatLng(52.95, 7.10),
+      LatLng(52.80, 7.05), LatLng(52.66, 7.02), LatLng(52.52, 6.98),
+      LatLng(52.38, 6.92), LatLng(52.24, 6.84), LatLng(52.10, 6.76),
+      LatLng(51.96, 6.68), LatLng(51.82, 6.55), LatLng(51.68, 6.38),
+      LatLng(51.54, 6.24), LatLng(51.39, 6.18), LatLng(51.24, 6.13),
+      LatLng(51.10, 5.99), LatLng(50.98, 5.86), LatLng(50.86, 5.82),
+      LatLng(50.75, 5.87), LatLng(50.65, 5.96), LatLng(50.53, 5.97),
+      LatLng(50.42, 5.90), LatLng(50.31, 5.81), LatLng(50.20, 5.82),
+      LatLng(50.12, 5.77), LatLng(50.08, 5.65), LatLng(50.12, 5.53),
+      LatLng(50.22, 5.44), LatLng(50.31, 5.35), LatLng(50.40, 5.22),
+      LatLng(50.46, 5.08), LatLng(50.52, 4.94), LatLng(50.58, 4.78),
+      LatLng(50.66, 4.62), LatLng(50.74, 4.48), LatLng(50.83, 4.32),
+      LatLng(50.93, 4.15), LatLng(51.04, 3.98), LatLng(51.14, 3.80),
+      LatLng(51.23, 3.62), LatLng(51.35, 3.36),
+    ],
+    // België
+    [
+      LatLng(51.35, 2.55), LatLng(51.35, 3.36), LatLng(51.23, 3.62),
+      LatLng(51.14, 3.80), LatLng(51.04, 3.98), LatLng(50.93, 4.15),
+      LatLng(50.83, 4.32), LatLng(50.74, 4.48), LatLng(50.66, 4.62),
+      LatLng(50.58, 4.78), LatLng(50.52, 4.94), LatLng(50.46, 5.08),
+      LatLng(50.40, 5.22), LatLng(50.31, 5.35), LatLng(50.22, 5.44),
+      LatLng(50.12, 5.53), LatLng(50.08, 5.65), LatLng(49.98, 5.78),
+      LatLng(49.87, 5.85), LatLng(49.76, 5.86), LatLng(49.65, 5.82),
+      LatLng(49.54, 5.75), LatLng(49.45, 5.72), LatLng(49.50, 5.35),
+      LatLng(49.55, 5.00), LatLng(49.62, 4.65), LatLng(49.76, 4.43),
+      LatLng(49.91, 4.25), LatLng(50.08, 4.10), LatLng(50.25, 3.84),
+      LatLng(50.40, 3.57), LatLng(50.55, 3.25), LatLng(50.70, 2.91),
+      LatLng(50.84, 2.62), LatLng(51.00, 2.55), LatLng(51.18, 2.55),
+      LatLng(51.35, 2.55),
+    ],
+    // Luxemburg
+    [
+      LatLng(49.89, 5.73), LatLng(50.18, 5.75), LatLng(50.35, 5.95),
+      LatLng(50.18, 6.15), LatLng(49.96, 6.24), LatLng(49.61, 6.36),
+      LatLng(49.45, 6.36), LatLng(49.45, 6.10), LatLng(49.54, 5.75),
+      LatLng(49.70, 5.72), LatLng(49.89, 5.73),
+    ],
   ];
 
   @override
@@ -144,16 +184,17 @@ class _HomePageState extends State<HomePage> {
               cameraConstraint: CameraConstraint.contain(bounds: beneluxBounds),
             ),
             children: [
-              // Geen TileLayer: de kaart is lokaal en werkt volledig offline.
+              // Lokale kaart: geen internet, tiles of laadscherm nodig.
               PolygonLayer(
                 polygons: [
-                  Polygon(
-                    points: beneluxOutline,
-                    color: land,
-                    borderColor: border,
-                    borderStrokeWidth: 2.5,
-                    isFilled: true,
-                  ),
+                  for (final outline in countryOutlines)
+                    Polygon(
+                      points: outline,
+                      color: land,
+                      borderColor: border,
+                      borderStrokeWidth: 2.0,
+                      isFilled: true,
+                    ),
                 ],
               ),
               MarkerLayer(
